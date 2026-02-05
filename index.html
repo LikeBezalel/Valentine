@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Will you be my Valentine? 💘</title>
+
   <style>
     :root {
       --bg1: #ffe1ec;
@@ -22,6 +23,7 @@
 
     * { box-sizing: border-box; }
     html, body { height: 100%; }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -66,7 +68,9 @@
       width: 100%;
       height: min(560px, 84vh);
       transform-style: preserve-3d;
-      transition: transform 900ms cubic-bezier(.2,.7,.1,1), box-shadow 900ms ease;
+      transform-origin: center;
+      will-change: transform;
+      transition: transform 900ms cubic-bezier(.18,.85,.12,1);
     }
 
     .card-face {
@@ -81,29 +85,34 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px 30px;
+      padding: 34px 30px;
       gap: 10px;
       backface-visibility: hidden;
     }
 
-    .card-front {
-      transform: rotateY(0deg);
-    }
+    .card-front { transform: rotateY(0deg); }
 
+    /* Back: more padding, top/bottom breathing room, and better heading spacing */
     .card-back {
       transform: rotateY(180deg);
       text-align: center;
+      justify-content: flex-start;
+      padding-top: 44px;
+      padding-bottom: 44px;
+      overflow: auto; /* so it never feels squished on shorter screens */
+      -webkit-overflow-scrolling: touch;
     }
 
     .card.revealed {
-      transform: translateY(-18px) rotateY(180deg);
+      transform: rotateY(180deg);
     }
 
     h1 {
-      margin: 0 0 6px;
+      margin: 0 0 8px;
       font-family: "Bodoni Moda", "Didot", "Times New Roman", serif;
       font-size: clamp(30px, 4.8vw, 50px);
       letter-spacing: -0.02em;
+      line-height: 1.12;
       background: linear-gradient(90deg, #ff4d8b, #ff9db8, #ff7ab2);
       -webkit-background-clip: text;
       background-clip: text;
@@ -111,17 +120,19 @@
     }
 
     h2 {
-      margin: 0 0 8px;
+      margin: 0 0 10px;
       font-family: "Bodoni Moda", "Didot", "Times New Roman", serif;
-      font-size: clamp(26px, 4.2vw, 40px);
+      font-size: clamp(26px, 4.2vw, 42px);
       letter-spacing: -0.02em;
+      line-height: 1.12;
       color: #ff3f7d;
     }
 
     p {
-      margin: 0 0 10px;
+      margin: 0 0 12px;
       font-size: 16px;
       opacity: 0.92;
+      line-height: 1.35;
     }
 
     .stage {
@@ -134,7 +145,7 @@
       overflow: hidden;
       display: grid;
       place-items: center;
-      margin-top: 12px;
+      margin-top: 14px;
       box-shadow: inset 0 -8px 30px rgba(255,140,180,0.08);
     }
 
@@ -206,9 +217,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
 
-    .pulse {
-      animation: pulse 900ms ease-in-out;
-    }
+    .pulse { animation: pulse 900ms ease-in-out; }
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.03); }
@@ -235,9 +244,9 @@
 
     .schedule {
       list-style: none;
-      margin: 16px 0 0;
+      margin: 18px 0 0;
       padding: 0;
-      width: min(430px, 92%);
+      width: min(460px, 92%);
       text-align: left;
       display: grid;
       gap: 12px;
@@ -248,7 +257,7 @@
       grid-template-columns: 96px 1fr;
       gap: 12px;
       align-items: center;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-radius: 14px;
       background: rgba(255,255,255,0.6);
       border: 1px solid rgba(255, 168, 205, 0.5);
@@ -261,15 +270,17 @@
       text-transform: uppercase;
       font-size: 11px;
       letter-spacing: 0.08em;
+      line-height: 1.2;
     }
 
     .schedule .detail {
-      font-weight: 600;
+      font-weight: 650;
       color: #2b2b33;
+      line-height: 1.25;
     }
 
     .back-note {
-      margin-top: 14px;
+      margin-top: 18px;
       font-size: 14px;
       color: #6d2e4a;
       background: rgba(255, 184, 210, 0.22);
@@ -279,10 +290,11 @@
     }
 
     @media (max-width: 520px) {
-      .card { height: min(600px, 86vh); }
+      .card { height: min(640px, 88vh); }
       .schedule li { grid-template-columns: 1fr; }
       .schedule .label { font-size: 10px; }
       #noBtn { padding: 10px 16px; }
+      .card-back { padding-top: 42px; padding-bottom: 42px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -302,7 +314,7 @@
           <div class="buttons">
             <button id="yesBtn" aria-label="Yes, I will">Yes 💖</button>
           </div>
-          <button id="noBtn" aria-label="No">No 🙃</button>
+          <button id="noBtn" aria-label="No" type="button">No 🙃</button>
         </div>
 
         <div class="result" id="result" role="status" aria-live="polite"></div>
@@ -348,6 +360,17 @@
 
     const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
+    function getCurrentNoPos(stageRect, btnRect) {
+      const currentLeft = parseFloat(noBtn.style.left);
+      const currentTop  = parseFloat(noBtn.style.top);
+
+      // If unset, fall back to % positions
+      return {
+        left: Number.isFinite(currentLeft) ? currentLeft : stageRect.width * 0.55,
+        top:  Number.isFinite(currentTop)  ? currentTop  : stageRect.height * 0.58
+      };
+    }
+
     function placeNoButtonAwayFrom(pointerX, pointerY) {
       const stageRect = stage.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
@@ -356,8 +379,7 @@
       const maxX = stageRect.width - btnRect.width - pad;
       const maxY = stageRect.height - btnRect.height - pad;
 
-      const currentLeft = parseFloat(noBtn.style.left) || (stageRect.width * 0.55);
-      const currentTop  = parseFloat(noBtn.style.top)  || (stageRect.height * 0.58);
+      const { left: currentLeft, top: currentTop } = getCurrentNoPos(stageRect, btnRect);
 
       const px = pointerX - stageRect.left;
       const py = pointerY - stageRect.top;
@@ -376,13 +398,13 @@
       const len = Math.hypot(dx, dy) || 1;
       dx /= len; dy /= len;
 
-      const jump = Math.min(stageRect.width, stageRect.height) * (0.36 + Math.random() * 0.28);
+      const jump = Math.min(stageRect.width, stageRect.height) * (0.42 + Math.random() * 0.24);
 
       let newLeft = currentLeft + dx * jump;
       let newTop  = currentTop  + dy * jump;
 
-      newLeft += (Math.random() - 0.5) * 60;
-      newTop  += (Math.random() - 0.5) * 60;
+      newLeft += (Math.random() - 0.5) * 70;
+      newTop  += (Math.random() - 0.5) * 70;
 
       newLeft = clamp(newLeft, pad, maxX);
       newTop  = clamp(newTop, pad, maxY);
@@ -402,8 +424,15 @@
       const by = (btnRect.top  - stageRect.top)  + btnRect.height / 2;
 
       const dist = Math.hypot(px - bx, py - by);
-      const dangerRadius = 120;
+      const dangerRadius = 140; // a bit bigger than before
       if (dist < dangerRadius) placeNoButtonAwayFrom(e.clientX, e.clientY);
+    }
+
+    // Extra: as soon as you even hover over it, it bails
+    function onNoEnter(e) {
+      const x = e.clientX ?? (e.touches?.[0]?.clientX ?? (window.innerWidth / 2));
+      const y = e.clientY ?? (e.touches?.[0]?.clientY ?? (window.innerHeight / 2));
+      placeNoButtonAwayFrom(x, y);
     }
 
     function onNoPointerDown(e) {
@@ -411,11 +440,24 @@
       placeNoButtonAwayFrom(e.clientX, e.clientY);
     }
 
+    function onNoClick(e) {
+      // If a click somehow lands, immediately move again and do nothing
+      e.preventDefault();
+      e.stopPropagation();
+      const x = e.clientX ?? (window.innerWidth / 2);
+      const y = e.clientY ?? (window.innerHeight / 2);
+      placeNoButtonAwayFrom(x, y);
+      return false;
+    }
+
     stage.addEventListener("mousemove", onPointerMove);
     stage.addEventListener("touchmove", (e) => {
       const t = e.touches[0]; if (!t) return; placeNoButtonAwayFrom(t.clientX, t.clientY);
     }, { passive: true });
+
+    noBtn.addEventListener("pointerenter", onNoEnter);
     noBtn.addEventListener("pointerdown", onNoPointerDown);
+    noBtn.addEventListener("click", onNoClick);
 
     let revealed = false;
     yesBtn.addEventListener("click", () => {
@@ -426,16 +468,23 @@
       yesBtn.classList.add("pulse");
 
       stage.removeEventListener("mousemove", onPointerMove);
+      noBtn.removeEventListener("pointerenter", onNoEnter);
       noBtn.removeEventListener("pointerdown", onNoPointerDown);
+      noBtn.removeEventListener("click", onNoClick);
       noBtn.style.pointerEvents = "none";
 
       confettiHearts(110, document.body);
       confettiHearts(44, stage);
 
+      // Smooth flip: force layout, then flip in the next frame
       setTimeout(() => {
-        card.classList.add("revealed");
-        yesBtn.classList.remove("pulse");
-      }, 700);
+        // force reflow so transition always applies
+        void card.offsetHeight;
+        requestAnimationFrame(() => {
+          card.classList.add("revealed");
+          yesBtn.classList.remove("pulse");
+        });
+      }, 650);
     });
 
     function confettiHearts(count = 28, container = document.body) {
