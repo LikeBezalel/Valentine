@@ -387,12 +387,12 @@
       e.preventDefault();
 
       // +20% Yes, -5% No
-      yesScale *= 1.2;
+      yesScale *= 2;
       noScale  *= 0.5;
 
       // clamps
-      yesScale = Math.min(yesScale, 4.0);
-      noScale  = Math.max(noScale, 0.25);
+      yesScale = Math.min(yesScale, 6.0);
+      noScale  = Math.max(noScale, 0.10);
 
       applyScales();
 
