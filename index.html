@@ -171,8 +171,6 @@
       touch-action: none;
       padding: 12px 18px;
       z-index: 2;
-
-      /* keep translate + scaling together */
       transform: translate(-50%, -50%) scale(var(--noScale));
     }
 
@@ -316,11 +314,39 @@
 
     function applyScales() {
       // clamp so it doesn't get absurd
-      yesScale = clamp(yesScale, 1, 4.0);
-      noScale  = clamp(noScale, 0.25, 1);
+      yesScale = clamp(yesScale, 1, 6.0);
+      noScale  = clamp(noScale, 0.10, 1);
 
       document.documentElement.style.setProperty("--yesScale", String(yesScale));
       document.documentElement.style.setProperty("--noScale", String(noScale));
+    }
+
+    // ✅ NEW: start No directly under Yes (great for phones)
+    function placeNoUnderYes() {
+      const stageRect = stage.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
+      const noRect = noBtn.getBoundingClientRect();
+
+      const pad = 12;
+      const gap = 14;
+
+      // desired center X under Yes
+      let left = (yesRect.left - stageRect.left) + yesRect.width / 2;
+
+      // desired Y just below Yes
+      let top = (yesRect.bottom - stageRect.top) + gap + (noRect.height / 2);
+
+      // clamp inside stage bounds
+      const maxX = stageRect.width - noRect.width / 2 - pad;
+      const minX = noRect.width / 2 + pad;
+      const maxY = stageRect.height - noRect.height / 2 - pad;
+      const minY = noRect.height / 2 + pad;
+
+      left = clamp(left, minX, maxX);
+      top  = clamp(top,  minY, maxY);
+
+      noBtn.style.left = `${left}px`;
+      noBtn.style.top  = `${top}px`;
     }
 
     function placeNoButtonAwayFrom(pointerX, pointerY) {
@@ -382,11 +408,11 @@
       }
     }
 
-    // ✅ THIS is the key: scale changes happen on PRESS, not on click.
+    // ✅ scale changes happen on PRESS, not on click.
     function onNoPointerDown(e) {
       e.preventDefault();
 
-      // +20% Yes, -5% No
+      // your current behavior (keeping it exactly as you wrote it)
       yesScale *= 2;
       noScale  *= 0.5;
 
@@ -459,15 +485,20 @@
       }
     }
 
-    // initial placement + initial scale
+    // ✅ initial placement + initial scale
     window.addEventListener("load", () => {
-      const rect = stage.getBoundingClientRect();
-      noBtn.style.left = `${rect.width * 0.62}px`;
-      noBtn.style.top  = `${rect.height * 0.62}px`;
       applyScales();
+      // wait 1 frame so layout is correct, then place under Yes
+      requestAnimationFrame(() => placeNoUnderYes());
     });
 
     window.addEventListener("resize", () => {
+      // If we're still on the front, keep "No" under "Yes" when resizing
+      if (!revealed) {
+        requestAnimationFrame(() => placeNoUnderYes());
+      }
+
+      // keep existing clamp safety if it already moved elsewhere
       const stageRect = stage.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
       const pad = 12;
