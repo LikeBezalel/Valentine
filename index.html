@@ -9,8 +9,6 @@
     :root {
       --bg1: #ffe1ec;
       --bg2: #ee9ca7;
-      --bg3: #ffb6d5;
-      --bg4: #ffd5b8;
       --card: rgba(255, 255, 255, 0.88);
       --shadow: rgba(35, 10, 28, 0.18);
       --yes: #ff6aa2;
@@ -18,7 +16,10 @@
       --no: #ef4444;
       --text: #1b1c22;
       --accent: #ff4d8b;
-      --accent-soft: rgba(255, 86, 140, 0.22);
+
+      /* scale variables (JS updates these) */
+      --yesScale: 1;
+      --noScale: 1;
     }
 
     * { box-sizing: border-box; }
@@ -38,12 +39,29 @@
         linear-gradient(160deg, var(--bg1), var(--bg2));
       overflow: hidden;
       position: relative;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(16px 16px at 18% 22%, rgba(255,255,255,0.55) 0%, transparent 70%),
+        radial-gradient(22px 22px at 78% 18%, rgba(255,255,255,0.35) 0%, transparent 70%),
+        radial-gradient(20px 20px at 72% 78%, rgba(255,255,255,0.4) 0%, transparent 70%),
+        radial-gradient(26px 26px at 30% 78%, rgba(255,255,255,0.35) 0%, transparent 70%);
+      opacity: 0.6;
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(0.2px);
     }
 
     .card-wrap {
       width: min(760px, 94vw);
       perspective: 1200px;
       z-index: 2;
+      position: relative;
     }
 
     .card {
@@ -51,8 +69,9 @@
       width: 100%;
       height: min(560px, 84vh);
       transform-style: preserve-3d;
-      transition: transform 900ms cubic-bezier(.18,.85,.12,1);
+      transform-origin: center;
       will-change: transform;
+      transition: transform 900ms cubic-bezier(.18,.85,.12,1);
     }
 
     .card-face {
@@ -67,92 +86,135 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 36px 30px;
-      backface-visibility: hidden;
+      padding: 34px 30px;
       gap: 10px;
+      backface-visibility: hidden;
     }
 
     .card-front { transform: rotateY(0deg); }
 
     .card-back {
       transform: rotateY(180deg);
+      text-align: center;
       justify-content: flex-start;
-      padding-top: 44px;
-      padding-bottom: 44px;
-      overflow-y: auto;
+      padding-top: 46px;
+      padding-bottom: 46px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .card.revealed { transform: rotateY(180deg); }
 
-    h1, h2 {
+    h1 {
+      margin: 0 0 8px;
       font-family: "Bodoni Moda", "Didot", "Times New Roman", serif;
+      font-size: clamp(30px, 4.8vw, 50px);
       letter-spacing: -0.02em;
       line-height: 1.12;
-      margin: 0 0 10px;
-    }
-
-    h1 {
-      font-size: clamp(30px, 4.8vw, 50px);
       background: linear-gradient(90deg, #ff4d8b, #ff9db8, #ff7ab2);
       -webkit-background-clip: text;
+      background-clip: text;
       color: transparent;
     }
 
     h2 {
+      margin: 0 0 10px;
+      font-family: "Bodoni Moda", "Didot", "Times New Roman", serif;
       font-size: clamp(26px, 4.2vw, 42px);
+      letter-spacing: -0.02em;
+      line-height: 1.12;
       color: #ff3f7d;
     }
 
-    p { font-size: 16px; line-height: 1.35; opacity: 0.92; }
+    p { margin: 0 0 12px; font-size: 16px; opacity: 0.92; line-height: 1.35; }
 
     .stage {
       position: relative;
       width: 100%;
       height: 280px;
       border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62));
       border: 1px dashed rgba(255, 142, 185, 0.45);
-      background: rgba(255,255,255,0.65);
+      overflow: hidden;
       display: grid;
       place-items: center;
-      overflow: hidden;
       margin-top: 14px;
+      box-shadow: inset 0 -8px 30px rgba(255,140,180,0.08);
     }
 
     button {
-      border: none;
+      border: 0;
+      padding: 14px 20px;
       border-radius: 999px;
       font-size: 18px;
       font-weight: 800;
       cursor: pointer;
-      padding: 14px 22px;
-      box-shadow: 0 12px 26px rgba(0,0,0,0.12);
-      transition: transform 220ms cubic-bezier(.2,.9,.2,1);
       user-select: none;
+      transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.12);
     }
 
     #yesBtn {
       background: linear-gradient(180deg, var(--yes), var(--yes2));
       color: white;
-      padding: 16px 28px;
+      padding: 16px 26px;
+      box-shadow: 0 16px 30px rgba(255,70,120,0.18);
+      transform: scale(var(--yesScale));
     }
 
     #noBtn {
       position: absolute;
-      background: linear-gradient(180deg, #ff8a8a, var(--no));
-      color: white;
       left: 60%;
       top: 60%;
-      transform: translate(-50%, -50%);
+      background: linear-gradient(180deg, #ff8a8a, var(--no));
+      color: white;
       touch-action: none;
+      padding: 12px 18px;
+      z-index: 2;
+
+      /* keep translate + scaling together */
+      transform: translate(-50%, -50%) scale(var(--noScale));
     }
 
-    .result { margin-top: 12px; font-weight: 800; }
+    .result {
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      min-height: 30px;
+    }
+
+    .small { font-size: 13px; opacity: 0.75; margin-top: 6px; }
+
+    .sparkle { display: inline-block; animation: pop 450ms ease; }
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      opacity: 0.95;
+      animation: floatUp linear forwards;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,0.14));
+      mix-blend-mode: screen;
+      z-index: 1;
+    }
+    @keyframes floatUp {
+      to {
+        transform: translateY(-120vh) translateX(var(--drift, 0px)) rotate(var(--rot, 0deg)) scale(var(--scale,1));
+        opacity: 0;
+      }
+    }
 
     .schedule {
       list-style: none;
-      padding: 0;
       margin: 18px 0 0;
+      padding: 0;
       width: min(460px, 92%);
+      text-align: left;
       display: grid;
       gap: 12px;
     }
@@ -161,31 +223,48 @@
       display: grid;
       grid-template-columns: 96px 1fr;
       gap: 12px;
+      align-items: center;
       padding: 12px 14px;
       border-radius: 14px;
       background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255, 168, 205, 0.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
     }
 
-    .label {
-      font-size: 11px;
+    .schedule .label {
       font-weight: 800;
-      text-transform: uppercase;
       color: var(--accent);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
     }
 
-    .detail { font-weight: 600; }
+    .schedule .detail {
+      font-weight: 650;
+      color: #2b2b33;
+      line-height: 1.25;
+    }
 
     .back-note {
       margin-top: 18px;
+      font-size: 14px;
+      color: #6d2e4a;
+      background: rgba(255, 184, 210, 0.22);
       padding: 10px 16px;
       border-radius: 999px;
-      background: rgba(255,184,210,0.22);
-      font-size: 14px;
+      border: 1px solid rgba(255, 120, 170, 0.28);
     }
 
     @media (max-width: 520px) {
       .card { height: min(640px, 88vh); }
       .schedule li { grid-template-columns: 1fr; }
+      .schedule .label { font-size: 10px; }
+      #noBtn { padding: 10px 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
@@ -197,23 +276,24 @@
         <h1>Will you be my Valentine? 💘</h1>
         <p>Be honest… but also, choose wisely 😌</p>
 
-        <div class="stage" id="stage">
-          <button id="yesBtn">Yes 💖</button>
-          <button id="noBtn">No 🙃</button>
+        <div class="stage" id="stage" aria-label="Valentine button area">
+          <button id="yesBtn" aria-label="Yes, I will">Yes 💖</button>
+          <button id="noBtn" aria-label="No" type="button">No 🙃</button>
         </div>
 
-        <div class="result" id="result"></div>
+        <div class="result" id="result" role="status" aria-live="polite"></div>
+        <div class="small">Tip: Try to click “No” 😈</div>
       </div>
 
-      <div class="card-face card-back">
+      <div class="card-face card-back" aria-label="Valentine schedule">
         <h2>Valentine's Day Plan 💌</h2>
         <p>Here’s our lineup for the day.</p>
         <ol class="schedule">
-          <li><span class="label">First up</span><span class="detail">heart-shaped Chick-fil-A breakfast ❤️</span></li>
-          <li><span class="label">Then</span><span class="detail">zoo wandering together 🐘🦒</span></li>
-          <li><span class="label">After that</span><span class="detail">a surprise early dinner ✨</span></li>
-          <li><span class="label">Finally</span><span class="detail">winding down with The Goat 🎬</span></li>
-          <li><span class="label">End the night</span><span class="detail">the after-math 😏💋</span></li>
+          <li><span class="label">First up</span><span class="detail">starting the day with a heart-shaped Chick-fil-A breakfast ❤️</span></li>
+          <li><span class="label">Then</span><span class="detail">heading to the zoo for some fun and wandering together 🐘🦒</span></li>
+          <li><span class="label">After that</span><span class="detail">a surprise early dinner you won’t see coming ✨</span></li>
+          <li><span class="label">Finally</span><span class="detail">we’ll wind down with The Goat 🎬</span></li>
+          <li><span class="label">And to end the night…</span><span class="detail">the after-math at 1609 Abrams Rd 😏💋</span></li>
         </ol>
         <div class="back-note">Can’t wait to spend the day with you 💗</div>
       </div>
@@ -221,45 +301,185 @@
   </div>
 
   <script>
-    const yesBtn = document.getElementById("yesBtn");
-    const noBtn = document.getElementById("noBtn");
     const stage = document.getElementById("stage");
+    const noBtn  = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
     const result = document.getElementById("result");
     const card = document.getElementById("card");
 
+    let revealed = false;
+
     let yesScale = 1;
-    let noScale = 1;
+    let noScale  = 1;
 
     const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-    function updateScales() {
-      yesBtn.style.transform = `scale(${yesScale})`;
-      noBtn.style.transform = `translate(-50%, -50%) scale(${noScale})`;
+    function applyScales() {
+      // clamp so it doesn't get absurd
+      yesScale = clamp(yesScale, 1, 4.0);
+      noScale  = clamp(noScale, 0.25, 1);
+
+      document.documentElement.style.setProperty("--yesScale", String(yesScale));
+      document.documentElement.style.setProperty("--noScale", String(noScale));
     }
 
-    function moveNo(x, y) {
-      const r = stage.getBoundingClientRect();
+    function placeNoButtonAwayFrom(pointerX, pointerY) {
+      const stageRect = stage.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
       const pad = 12;
-      const nx = clamp(Math.random() * r.width, pad, r.width - pad);
-      const ny = clamp(Math.random() * r.height, pad, r.height - pad);
-      noBtn.style.left = `${nx}px`;
-      noBtn.style.top = `${ny}px`;
+      const maxX = stageRect.width - btnRect.width - pad;
+      const maxY = stageRect.height - btnRect.height - pad;
+
+      // current (px) positions
+      const currentLeft = parseFloat(noBtn.style.left) || (stageRect.width * 0.6);
+      const currentTop  = parseFloat(noBtn.style.top)  || (stageRect.height * 0.6);
+
+      const px = pointerX - stageRect.left;
+      const py = pointerY - stageRect.top;
+
+      const bx = currentLeft;
+      const by = currentTop;
+
+      let dx = bx - px;
+      let dy = by - py;
+
+      if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+        dx = (Math.random() - 0.5);
+        dy = (Math.random() - 0.5);
+      }
+
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len; dy /= len;
+
+      const jump = Math.min(stageRect.width, stageRect.height) * (0.45 + Math.random() * 0.2);
+
+      let newLeft = currentLeft + dx * jump + (Math.random() - 0.5) * 70;
+      let newTop  = currentTop  + dy * jump + (Math.random() - 0.5) * 70;
+
+      newLeft = clamp(newLeft, pad, maxX);
+      newTop  = clamp(newTop, pad, maxY);
+
+      noBtn.style.left = `${newLeft}px`;
+      noBtn.style.top  = `${newTop}px`;
     }
 
-    noBtn.addEventListener("click", e => {
-      e.preventDefault();
-      yesScale = Math.min(yesScale * 1.2, 3.5);
-      noScale = Math.max(noScale * 0.95, 0.4);
-      updateScales();
-      moveNo(e.clientX, e.clientY);
-      result.innerHTML = "Nice try 😏";
-    });
+    function onStagePointerMove(e) {
+      const stageRect = stage.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
 
-    noBtn.addEventListener("mouseenter", e => moveNo(e.clientX, e.clientY));
+      const px = e.clientX - stageRect.left;
+      const py = e.clientY - stageRect.top;
+
+      const bx = (btnRect.left - stageRect.left) + btnRect.width / 2;
+      const by = (btnRect.top  - stageRect.top)  + btnRect.height / 2;
+
+      const dist = Math.hypot(px - bx, py - by);
+      const dangerRadius = 140;
+
+      if (dist < dangerRadius) {
+        placeNoButtonAwayFrom(e.clientX, e.clientY);
+      }
+    }
+
+    // ✅ THIS is the key: scale changes happen on PRESS, not on click.
+    function onNoPointerDown(e) {
+      e.preventDefault();
+
+      // +20% Yes, -5% No
+      yesScale *= 1.2;
+      noScale  *= 0.95;
+
+      // clamps
+      yesScale = Math.min(yesScale, 4.0);
+      noScale  = Math.max(noScale, 0.25);
+
+      applyScales();
+
+      result.innerHTML = `<span class="sparkle">Nice try 😏</span>`;
+
+      // then teleport away
+      const x = e.clientX ?? (window.innerWidth / 2);
+      const y = e.clientY ?? (window.innerHeight / 2);
+      placeNoButtonAwayFrom(x, y);
+    }
+
+    // keep the dodge logic
+    stage.addEventListener("mousemove", onStagePointerMove);
+    stage.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      placeNoButtonAwayFrom(t.clientX, t.clientY);
+    }, { passive: true });
+
+    noBtn.addEventListener("pointerdown", onNoPointerDown);
 
     yesBtn.addEventListener("click", () => {
-      result.innerHTML = "Yayyyy!! 🥹💖";
-      setTimeout(() => card.classList.add("revealed"), 500);
+      if (revealed) return;
+      revealed = true;
+
+      result.innerHTML = `<span class="sparkle">Yayyyy!! 🥹💖💖💖</span>`;
+
+      // confetti hearts
+      confettiHearts(110, document.body);
+      confettiHearts(44, stage);
+
+      // smooth flip: force layout, then flip in next frame
+      setTimeout(() => {
+        void card.offsetHeight;
+        requestAnimationFrame(() => card.classList.add("revealed"));
+      }, 650);
+    });
+
+    function confettiHearts(count = 28, container = document.body) {
+      const hearts = ["💖","💘","💕","💗","💓","💞","❤️","❣️"];
+      const bounds = container === document.body
+        ? { width: window.innerWidth }
+        : container.getBoundingClientRect();
+
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("div");
+        el.className = "heart";
+        el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+
+        const startX = Math.random() * (bounds.width || window.innerWidth);
+        el.style.left = `${startX}px`;
+
+        const duration = (1.4 + Math.random() * 2.6);
+        el.style.animationDuration = `${duration}s`;
+        el.style.setProperty("--drift", `${(Math.random() * 300 - 150)}px`);
+        el.style.setProperty("--rot", `${(Math.random() * 160 - 80)}deg`);
+        el.style.setProperty("--scale", `${(0.7 + Math.random() * 1.4)}`);
+        el.style.fontSize = `${12 + Math.random() * 36}px`;
+
+        setTimeout(() => {
+          container.appendChild(el);
+          el.addEventListener("animationend", () => el.remove(), { once: true });
+        }, i * Math.random() * 18);
+      }
+    }
+
+    // initial placement + initial scale
+    window.addEventListener("load", () => {
+      const rect = stage.getBoundingClientRect();
+      noBtn.style.left = `${rect.width * 0.62}px`;
+      noBtn.style.top  = `${rect.height * 0.62}px`;
+      applyScales();
+    });
+
+    window.addEventListener("resize", () => {
+      const stageRect = stage.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+      const pad = 12;
+
+      const maxX = stageRect.width - btnRect.width - pad;
+      const maxY = stageRect.height - btnRect.height - pad;
+
+      const left = clamp(parseFloat(noBtn.style.left) || 0, pad, maxX);
+      const top  = clamp(parseFloat(noBtn.style.top)  || 0, pad, maxY);
+
+      noBtn.style.left = `${left}px`;
+      noBtn.style.top  = `${top}px`;
     });
   </script>
 </body>
